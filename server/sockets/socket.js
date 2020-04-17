@@ -17,18 +17,21 @@ io.on('connection', (client) => {
         }
 
         // Connect user to room
-        client.join(data.sala);
+        client.join(data.room);
 
-        users.addPerson(client.id, data.name);
+        users.addPerson(client.id, data.name, data.room);
         client.to(data.room).emit('listPerson', users.getPersonsByRoom(data.room));
+        client.broadcast.to(data.room).emit('createMessage', createMessage('admin', `${data.name} joined the chat`));
         callback(users.getPersonsByRoom(data.room));
     });
 
-    client.on('createMessage', (data) => {
+    client.on('createMessage', (data, callback) => {
         let person = users.getPerson(client.id);
         console.log(person)
         let message = createMessage(person.name, data.message);
-        client.to(person.room).emit('createMessage', message);
+        client.broadcast.to(person.room).emit('createMessage', message);
+
+        callback(message);
     });
 
     client.on('disconnect', () => {
